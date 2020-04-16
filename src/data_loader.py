@@ -75,7 +75,7 @@ class Static_dataset(data.Dataset):
         if self.load_gt:
           gts = self.frame_gts_list[frames]
 
-        packed = []
+        
 
         normalize = transforms.Normalize(mean = [0.485, 0.456, 0.406],
                                          std = [0.229, 0.224, 0.225])
@@ -116,9 +116,9 @@ class Static_dataset(data.Dataset):
 
         if self.load_gt:
 
-            packed.append((data,gt)) # pack a list of data with the corresponding list of ground truths
+            packed = (data,gt) # pack data with the corresponding list of ground truths
         else:
-            packed.append((data, "_"))
+            packed = (data, "_")
 
 
     return packed
