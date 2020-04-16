@@ -116,7 +116,7 @@ class Static_dataset(data.Dataset):
 
         if self.load_gt:
 
-            packed = (data,gt) # pack data with the corresponding list of ground truths
+            packed = (data,gt) # pack data with the corresponding  ground truths
         else:
             packed = (data, "_")
 
