@@ -37,7 +37,7 @@ def main(args, params ):
 
     if args.dataset == "Static_dataset":
         print("Commencing training on dataset {}".format(args.dataset))
-        train_set = DHF1K_frames(
+        train_set = Static_dataset(
             root_path = args.src,
             load_gt = True,
             number_of_frames = int(args.end),
@@ -48,7 +48,7 @@ def main(args, params ):
         train_loader = data.DataLoader(train_set, **params)
 
         if args.val_perc > 0:
-            val_set = DHF1K_frames(
+            val_set = Static_dataset(
                 root_path = args.src,
                 load_gt = True,
                 number_of_frames = int(args.end),
@@ -64,11 +64,11 @@ def main(args, params ):
 
     # Models
 
-    if 'Sal_based_Attention_module' in args.new_model:
+    if 'Sal_based_Attention_module' in args.pt_model:
         model = Sal_based_Attention_module()
         print("Initialized {}".format(args.new_model)) 
 
-    elif 'Sal_global_Attention' in args.new_model:
+    elif 'Sal_global_Attention' in args.pt_model:
         model = Sal_based_Attention_module()
         print("Initialized {}".format(args.new_model))
 
@@ -172,7 +172,7 @@ def load_weights(model, pt_model, device='cpu'):
 
     return checkpoint
 
-def train(train_loader, model, criterion, optimizer, epoch, use_gpu, dtype):
+def train(train_loader, model, criterion, optimizer, epoch, dtype):
 
 
     # Switch to train mode
@@ -186,16 +186,16 @@ def train(train_loader, model, criterion, optimizer, epoch, use_gpu, dtype):
         start = datetime.datetime.now().replace(microsecond=0)
         loss = 0
         for i in range(images.size()[0]):
-            frame , gtruth = images[i]
-            saliency_map , _ = model.forward(frame)
+            frame , gtruth , fixation = images[i]
+            saliency_map , attention_map = model.forward(frame)
             saliency_map = saliency_map.squeeze(0)
-            
+            attention_map = attention_map.squeeze(0)
             if saliency_map.size() != gtruth.size():
                 print(saliency_map.size())
                 print(gtruth.size())
                 a, b, c, _ = saliency_map.size()
                 saliency_map = torch.cat([saliency_map, torch.zeros(a, b, c, 1).cuda()], 3)
-            loss = loss + criterion(saliency_map, gtruth)
+            loss = loss + criterion(saliency_map, gtruth) +criterion(attention_map, fixation)
 
         loss.backward()
         optimizer.step()
@@ -223,7 +223,7 @@ def validate(val_loader, model, criterion, epoch ):
         for  j,images in enumerate(val_loader):
             loss = 0
             for i in range(images.size()[0]):
-                frame , gtruth = images[i]
+                frame , gtruth , _ = images[i]
                 saliency_map , _ = model.forward(frame)
                 saliency_map = saliency_map.squeeze(0)
                 
